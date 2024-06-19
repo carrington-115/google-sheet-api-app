@@ -1,6 +1,6 @@
 const { service, oAuthClient } = require("../config/googleSheetsConfig");
 
-const createSpreadsheet = async (req, res, next) => {
+const createSpreadsheet = async (req, res) => {
   const resource = {
     resource: {
       properties: {
@@ -11,11 +11,15 @@ const createSpreadsheet = async (req, res, next) => {
   try {
     const spreadsheet = await service.spreadsheets.create(resource);
     const sheetId = spreadsheet.data.spreadsheetId;
+    console.log("The sheetid is", sheetId);
     res
       .status(200)
       .json({ message: `The spreadsheet was created with id: ${sheetId}` });
   } catch (error) {
     console.error(error);
+    res
+      .status(400)
+      .json({ message: "An error occured while creating the spreadsheet" });
   }
 };
 
