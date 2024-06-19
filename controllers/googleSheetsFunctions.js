@@ -1,6 +1,16 @@
+require("dotenv").config({ path: "../.env" });
 const path = require("path");
 const { service, oAuthClient } = require("../config/googleSheetsConfig");
-const { writeFileSync, readFileSync } = require("fs");
+const { readFileSync } = require("fs");
+const { envDataParser } = require("./functions");
+
+const authCredentialToken = {
+  access_token: process.env.access_token,
+  refresh_token: process.env.refresh_token,
+  scope: process.env.scope,
+  token_type: process.env.token_type,
+  expiry_date: process.env.expiry_date,
+};
 
 const createSpreadsheet = async (req, res) => {
   const resource = {
@@ -10,17 +20,13 @@ const createSpreadsheet = async (req, res) => {
       },
     },
   };
-  const tokens = JSON.parse(
-    readFileSync(path.join(__dirname, "tokens.json"), "utf8")
-  );
+  const tokens = authCredentialToken;
   try {
     oAuthClient.setCredentials(tokens);
     const spreadsheet = await service.spreadsheets.create(resource);
     const sheetId = spreadsheet.data.spreadsheetId;
-    console.log("The sheetid is", sheetId);
-    res
-      .status(200)
-      .json({ message: `The spreadsheet was created with id: ${sheetId}` });
+    envDataParser({ SHEET_ID: sheetId });
+    res.status(200).json({ message: `The spreadsheet was created` });
   } catch (error) {
     console.error(error);
     res
@@ -49,10 +55,7 @@ const authClientRoute = async (req, res) => {
   try {
     const { tokens } = await oAuthClient.getToken(code);
     oAuthClient.setCredentials(tokens);
-    writeFileSync(
-      path.join(__dirname, "tokens.json"),
-      JSON.stringify(tokens, null, 2)
-    );
+    envDataParser(tokens);
     res.status(200).json({ message: "Authentication successful" });
   } catch (error) {
     console.error(error);

@@ -1,21 +1,17 @@
-require("dotenv").config({ path: "../.env" });
-const { service } = require("../config/googleSheetsConfig");
+const { readFileSync, writeFileSync } = require("fs");
+const dotenv = require("dotenv");
 
-const createSpreadsheetCmd = async () => {
-  const resource = {
-    resource: {
-      properties: {
-        title: "test spreadsheet",
-      },
-    },
-  };
-  try {
-    const spreadsheet = await service.spreadsheets.create(resource);
-    return spreadsheet.data.spreadsheetId;
-  } catch (error) {
-    console.error(error);
+const envDataParser = (secrets) => {
+  const location = "./.env";
+  const envContent = readFileSync(location, "utf8");
+  const envVars = dotenv.parse(envContent);
+  for (let key in secrets) {
+    envVars[key] = secrets[key];
   }
+  const updatedEnvData = Object.entries(envVars)
+    .map(([j, k]) => `${j}=${k}`)
+    .join("\n");
+  writeFileSync(location, updatedEnvData);
 };
 
-const newSheet = createSpreadsheetCmd();
-console.log(newSheet);
+module.exports = { envDataParser };
