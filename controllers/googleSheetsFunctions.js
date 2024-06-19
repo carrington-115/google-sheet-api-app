@@ -1,4 +1,6 @@
+const path = require("path");
 const { service, oAuthClient } = require("../config/googleSheetsConfig");
+const { writeFileSync } = require("fs");
 
 const createSpreadsheet = async (req, res) => {
   const resource = {
@@ -24,7 +26,7 @@ const createSpreadsheet = async (req, res) => {
 };
 
 // oauth redirect login
-const authRedirectRoute = (req, res) => {
+const authRedirectRoute = async (req, res) => {
   const scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -43,6 +45,10 @@ const authClientRoute = async (req, res) => {
   try {
     const { token } = await oAuthClient.getToken(code);
     oAuthClient.setCredentials(token);
+    writeFileSync(
+      path.join(__dirname, "tokens.json"),
+      JSON.stringify(token, null, 2)
+    );
     res.status(200).json({ message: "Authentication successful" });
   } catch (error) {
     console.error(error);
