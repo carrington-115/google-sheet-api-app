@@ -1,4 +1,4 @@
-const { service } = require("../config/googleSheetsConfig");
+const { service, oAuthClient } = require("../config/googleSheetsConfig");
 
 const createSpreadsheet = async (req, res, next) => {
   const resource = {
@@ -10,10 +10,40 @@ const createSpreadsheet = async (req, res, next) => {
   };
   try {
     const spreadsheet = await service.spreadsheets.create(resource);
-    return spreadsheet.data.spreadsheetId;
+    const sheetId = spreadsheet.data.spreadsheetId;
+    res
+      .status(200)
+      .json({ message: `The spreadsheet was created with id: ${sheetId}` });
   } catch (error) {
     console.error(error);
   }
 };
 
-module.exports = { createSpreadsheet };
+// oauth redirect login
+const authRedirectRoute = (req, res) => {
+  const scopes = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+  ];
+
+  const url = oAuthClient.generateAuthUrl({
+    access_type: "offline",
+    scope: scopes,
+  });
+  res.redirect(url);
+};
+
+// oauthlogin
+const authClientRoute = async (req, res) => {
+  const { code } = req.query;
+  try {
+    const { token } = await oAuthClient.getToken(code);
+    oAuthClient.setCredentials(token);
+    res.status(200).json({ message: "Authentication successful" });
+  } catch (error) {
+    console.error(error);
+    res.status(200).json({ message: "Authentication unsucessful" });
+  }
+};
+
+module.exports = { createSpreadsheet, authClientRoute, authRedirectRoute };
