@@ -1,6 +1,6 @@
 const path = require("path");
 const { service, oAuthClient } = require("../config/googleSheetsConfig");
-const { writeFileSync } = require("fs");
+const { writeFileSync, readFileSync } = require("fs");
 
 const createSpreadsheet = async (req, res) => {
   const resource = {
@@ -10,7 +10,11 @@ const createSpreadsheet = async (req, res) => {
       },
     },
   };
+  const tokens = JSON.parse(
+    readFileSync(path.join(__dirname, "tokens.json"), "utf8")
+  );
   try {
+    oAuthClient.setCredentials(tokens);
     const spreadsheet = await service.spreadsheets.create(resource);
     const sheetId = spreadsheet.data.spreadsheetId;
     console.log("The sheetid is", sheetId);
@@ -43,11 +47,11 @@ const authRedirectRoute = async (req, res) => {
 const authClientRoute = async (req, res) => {
   const { code } = req.query;
   try {
-    const { token } = await oAuthClient.getToken(code);
-    oAuthClient.setCredentials(token);
+    const { tokens } = await oAuthClient.getToken(code);
+    oAuthClient.setCredentials(tokens);
     writeFileSync(
       path.join(__dirname, "tokens.json"),
-      JSON.stringify(token, null, 2)
+      JSON.stringify(tokens, null, 2)
     );
     res.status(200).json({ message: "Authentication successful" });
   } catch (error) {
