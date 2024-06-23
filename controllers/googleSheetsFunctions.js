@@ -10,29 +10,6 @@ const authCredentialToken = {
   expiry_date: process.env.expiry_date,
 };
 
-const createSpreadsheet = async (req, res) => {
-  const resource = {
-    resource: {
-      properties: {
-        title: "test spreadsheet",
-      },
-    },
-  };
-  const tokens = authCredentialToken;
-  try {
-    oAuthClient.setCredentials(tokens);
-    const spreadsheet = await service.spreadsheets.create(resource);
-    const sheetId = spreadsheet.data.spreadsheetId;
-    envDataParser({ SHEET_ID: sheetId });
-    res.status(200).json({ message: `The spreadsheet was created` });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(400)
-      .json({ message: "An error occured while creating the spreadsheet" });
-  }
-};
-
 // oauth redirect login
 const authRedirectRoute = (req, res) => {
   const scopes = [
@@ -61,4 +38,53 @@ const authClientRoute = async (req, res) => {
   }
 };
 
-module.exports = { createSpreadsheet, authClientRoute, authRedirectRoute };
+const createSpreadsheet = async (req, res) => {
+  const resource = {
+    resource: {
+      properties: {
+        title: "test spreadsheet",
+      },
+    },
+  };
+  const tokens = authCredentialToken;
+  try {
+    oAuthClient.setCredentials(tokens);
+    const spreadsheet = await service.spreadsheets.create(resource);
+    const sheetId = spreadsheet.data.spreadsheetId;
+    envDataParser({ SHEET_ID: sheetId });
+    res.status(200).json({ message: `The spreadsheet was created` });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(400)
+      .json({ message: "An error occured while creating the spreadsheet" });
+  }
+};
+
+const readSpreadSheetData = async (req, res) => {
+  try {
+    const spreadSheetId = process.env.SHEET_ID;
+    // const nameRange = "";
+    // const ageRanage = "";
+    // const countryRange = "";
+    const testRange = "sheet1!A1:C5";
+    const response = await service.spreadsheets.values.get({
+      spreadSheetId,
+      testRange,
+    });
+    console.log(response.data.values);
+    res.send("Data read from spreadsheet");
+  } catch (error) {
+    console.error(error);
+    res
+      .status(404)
+      .json({ message: "There was an error while reading the data" });
+  }
+};
+
+module.exports = {
+  createSpreadsheet,
+  authClientRoute,
+  authRedirectRoute,
+  readSpreadSheetData,
+};
