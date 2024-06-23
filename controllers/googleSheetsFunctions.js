@@ -1,7 +1,5 @@
 require("dotenv").config({ path: "../.env" });
-const path = require("path");
 const { service, oAuthClient } = require("../config/googleSheetsConfig");
-const { readFileSync } = require("fs");
 const { envDataParser } = require("./functions");
 
 const authCredentialToken = {
@@ -36,7 +34,7 @@ const createSpreadsheet = async (req, res) => {
 };
 
 // oauth redirect login
-const authRedirectRoute = async (req, res) => {
+const authRedirectRoute = (req, res) => {
   const scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
