@@ -63,17 +63,29 @@ const createSpreadsheet = async (req, res) => {
 
 const readSpreadSheetData = async (req, res) => {
   try {
+    oAuthClient.setCredentials(authCredentialToken);
     const spreadSheetId = process.env.SHEET_ID;
-    // const nameRange = "";
-    // const ageRanage = "";
-    // const countryRange = "";
-    const testRange = "sheet1!A1:C5";
+
+    const testRange = "Sheet1!A2:C5";
     const response = await service.spreadsheets.values.get({
-      spreadSheetId,
-      testRange,
+      spreadsheetId: spreadSheetId,
+      range: testRange,
     });
-    console.log(response.data.values);
-    res.send("Data read from spreadsheet");
+    const receivedData = response.data.values;
+    const sheetData = [];
+
+    for (let i = 0; i < receivedData.length; i++) {
+      const userData = receivedData[i];
+      const user = {
+        name: userData[0],
+        age: userData[1],
+        country: userData[2],
+      };
+      sheetData.push(user);
+    }
+    res
+      .status(200)
+      .json({ message: "Data read from spreadsheet", data: sheetData });
   } catch (error) {
     console.error(error);
     res
